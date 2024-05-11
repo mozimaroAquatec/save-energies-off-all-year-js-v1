@@ -51,7 +51,7 @@ mqttClient.subscribe("Helioss/Energie", () => {
 });
 // Event handler for receiving MQTT messages
 mqttClient.on("message", async function (topic, message) {
-    console.log(`Received message from topic : ${topic} and the message is :${message}`, message.toString());
+    console.log(`Received message from topic : ${topic} and the message is :${message}`);
     // Updating energy data
     await energieServices.updateEnergie(message.toString());
 });

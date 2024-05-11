@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateEnergie = exports.createAllDatesAndHoursOfYear = void 0;
 const energie_model_1 = __importDefault(require("../models/energie.model"));
 const error_handler_1 = __importDefault(require("../utils/error.handler"));
+const moment_timezone_1 = __importDefault(require("moment-timezone"));
 /**
  * @desc Creates energy records for all dates and hours of a given year.
  * @param year - The year for which to generate energy records.
@@ -50,9 +51,27 @@ const updateEnergie = async function (message) {
         // Get the current date and time
         const dateString = new Date();
         const gmtTime = new Date(dateString.toUTCString());
+        /*
+    
+    get hout gmt+1
+    
+    */
+        // Get the current date and time
+        const now = new Date();
+        // Get the UTC time in milliseconds
+        const utcTime = now.getTime();
+        // Get the local time zone offset in minutes
+        const localOffset = now.getTimezoneOffset();
+        // Convert the local time to GMT+1 (CET) time
+        const gmtPlusOneTime = utcTime + (localOffset + 60) * 60 * 1000;
+        // Create a new Date object for GMT+1 time
+        const gmtPlusOneDate = new Date(gmtPlusOneTime);
+        // Get the hour in GMT+1
+        const hourInGMTPlusOne = gmtPlusOneDate.getHours();
+        console.log("Current hour in GMT+1:", hourInGMTPlusOne);
         // Format the date as "YYYY/M/D"
         const date = `${gmtTime.getFullYear()}/${gmtTime.getMonth() + 1}/${gmtTime.getDate()}`;
-        const time = `${gmtTime.getHours()}`;
+        const time = `${hourInGMTPlusOne}`;
         // Extract energy data from the message
         let energie = message.toString().slice(0, 9);
         if (energie[energie.length - 1] === ".") {
@@ -80,4 +99,14 @@ const updateEnergie = async function (message) {
     }
 };
 exports.updateEnergie = updateEnergie;
+const timezones = [
+    "Europe/Brussels",
+    "Europe/Copenhagen",
+    "Europe/Madrid",
+    "Europe/Paris",
+];
+timezones.forEach((timezone) => {
+    const now = (0, moment_timezone_1.default)().tz(timezone);
+    console.log(`Current hour in ${timezone}: ${now.format("HH:mm")}`);
+});
 //# sourceMappingURL=energies.services.js.map
