@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateEnergie = exports.createAllDatesAndHoursOfYear = void 0;
 const energie_model_1 = __importDefault(require("../models/energie.model"));
 const error_handler_1 = __importDefault(require("../utils/error.handler"));
-const moment_timezone_1 = __importDefault(require("moment-timezone"));
 /**
  * @desc Creates energy records for all dates and hours of a given year.
  * @param year - The year for which to generate energy records.
@@ -99,14 +98,4 @@ const updateEnergie = async function (message) {
     }
 };
 exports.updateEnergie = updateEnergie;
-const timezones = [
-    "Europe/Brussels",
-    "Europe/Copenhagen",
-    "Europe/Madrid",
-    "Europe/Paris",
-];
-timezones.forEach((timezone) => {
-    const now = (0, moment_timezone_1.default)().tz(timezone);
-    console.log(`Current hour in ${timezone}: ${now.format("HH:mm")}`);
-});
 //# sourceMappingURL=energies.services.js.map
