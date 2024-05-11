@@ -48,29 +48,12 @@ exports.createAllDatesAndHoursOfYear = createAllDatesAndHoursOfYear;
 const updateEnergie = async function (message) {
     try {
         // Get the current date and time
-        const dateString = new Date();
-        const gmtTime = new Date(dateString.toUTCString());
-        /*
-    
-    get hout gmt+1
-    
-    */
-        // Get the current date and time
-        const now = new Date();
-        // Get the UTC time in milliseconds
-        const utcTime = now.getTime();
-        // Get the local time zone offset in minutes
-        const localOffset = now.getTimezoneOffset();
-        // Convert the local time to GMT+1 (CET) time
-        const gmtPlusOneTime = utcTime + (localOffset + 60) * 60 * 1000;
-        // Create a new Date object for GMT+1 time
-        const gmtPlusOneDate = new Date(gmtPlusOneTime);
-        // Get the hour in GMT+1
-        const hourInGMTPlusOne = gmtPlusOneDate.getHours();
-        console.log("Current hour in GMT+1:", hourInGMTPlusOne);
+        const utcNow = new Date();
+        const gmtPlus1Time = new Date(utcNow.getTime() + 3600000); // Add 1 hour (3600000 milliseconds)
+        const hour = gmtPlus1Time.getUTCHours();
         // Format the date as "YYYY/M/D"
-        const date = `${gmtTime.getFullYear()}/${gmtTime.getMonth() + 1}/${gmtTime.getDate()}`;
-        const time = `${hourInGMTPlusOne}`;
+        const date = `${gmtPlus1Time.getFullYear()}/${gmtPlus1Time.getMonth() + 1}/${gmtPlus1Time.getDate()}`;
+        const time = `${hour}`;
         // Extract energy data from the message
         let energie = message.toString().slice(0, 9);
         if (energie[energie.length - 1] === ".") {
