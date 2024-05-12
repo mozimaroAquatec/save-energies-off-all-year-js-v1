@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteEnergiesByYear = exports.resetEnergieById = exports.updateEnergie = exports.getEnergieByDateAndTime = exports.getEnergiesByYear = exports.getEnergiesWithPagination = exports.getEnergies = exports.createEenrgies = void 0;
+exports.deleteEnergiesByDate = exports.deleteEnergiesByYearAndMonth = exports.deleteEnergiesByYear = exports.createEnergiesByYearAndMonth = exports.resetEnergieById = exports.updateEnergie = exports.getEnergieByDateAndTime = exports.getEnergiesByYear = exports.getEnergiesWithPagination = exports.getEnergies = exports.createEenrgies = void 0;
 // Importing necessary modules
 const error_handler_1 = __importDefault(require("../utils/error.handler")); // Importing custom error handler
 const energie_model_1 = __importDefault(require("../models/energie.model")); // Importing Helioss model
@@ -75,7 +75,7 @@ exports.createEenrgies = createEenrgies;
 const getEnergies = async function (req, res) {
     try {
         // Query the database for all Energies records
-        const energies = await energie_model_1.default.find().select("-updatedAt -createdAt -message -year");
+        const energies = await energie_model_1.default.find().select("-updatedAt -createdAt -message -year -month");
         // Return success response with Energies data
         return res.status(200).json(energies);
     }
@@ -95,8 +95,7 @@ const getEnergiesWithPagination = async function (req, res) {
     try {
         const currentPage = parseInt(req.query.currentPage) || 1;
         const pageSize = parseInt(req.query.pageSize) || 50;
-        const pagesCount = Math.ceil((await energie_model_1.default.find().select("-updatedAt -createdAt -message -year"))
-            .length / pageSize);
+        const pagesCount = Math.ceil((await energie_model_1.default.find().select("-updatedAt -createdAt -message -year -month")).length / pageSize);
         console.log("pagesCount", pagesCount);
         if (!pagesCount) {
             return res.status(200).json([]);
@@ -166,7 +165,7 @@ const getEnergieByDateAndTime = async function (req, res) {
         // Query the database for all Energies records
         const energie = await energie_model_1.default.findOne({
             $and: [{ time }, { date }],
-        }).select("-message -year -updatedAt -createdAt");
+        }).select("-message -year -month -updatedAt -createdAt");
         // Return success response with Energies data
         return res.status(200).json(energie);
     }
@@ -228,6 +227,43 @@ const resetEnergieById = async function (req, res) {
 };
 exports.resetEnergieById = resetEnergieById;
 /**
+ * @desc Controller function to create energy records for all dates and hours of a given year and month.
+ * @param POST
+ * @access PUBLIC
+ */
+const createEnergiesByYearAndMonth = async function (req, res) {
+    try {
+        // Extract year and month from request body
+        let { year, month } = req.body;
+        // Validating input data from client
+        const { error } = (0, energies_shema_1.EnergiesByYearAndMonthSchema)(req.body);
+        if (error)
+            return res
+                .status(400)
+                .json(new error_handler_1.default(400, `${error.details[0].message}`));
+        if (typeof year === "string") {
+            year = parseInt(year);
+        }
+        if (typeof month === "string") {
+            month = parseInt(month);
+        }
+        const checkYear = (0, year_validation_1.isValidYear)(year);
+        if (!checkYear)
+            return res.status(400).json({ status: "false", message: "invalid year" });
+        // Generate energy records for the specified year
+        await energieServices.generateDatesAndHoursOfMonth(year, month);
+        return res
+            .status(201)
+            .json(new success_response_1.SuccessResponse(201, "energies created successfully"));
+    }
+    catch (error) {
+        // Handle errors
+        res.status(500).json(new error_handler_1.default(500, "Internal server error"));
+        throw new error_handler_1.default(500, `createEenrgies error: ${error}`);
+    }
+};
+exports.createEnergiesByYearAndMonth = createEnergiesByYearAndMonth;
+/**
  * @desc delete enrgies by year
  * @param DELETE /
  * @access PUBLIC
@@ -241,10 +277,16 @@ const deleteEnergiesByYear = async function (req, res) {
             return res
                 .status(400)
                 .json(new error_handler_1.default(400, `${error.details[0].message}`));
+        const existEnrgies = await energie_model_1.default.find({ year });
+        if (!existEnrgies.length) {
+            return res
+                .status(404)
+                .json(new error_handler_1.default(404, "Energy record does not exist"));
+        }
         await energie_model_1.default.deleteMany({ year });
         return res
             .status(200)
-            .json(new success_response_1.SuccessResponse(200, "energies deleted succes"));
+            .json(new success_response_1.SuccessResponse(200, "energies deleted successfully"));
     }
     catch (error) {
         // Handle errors
@@ -253,4 +295,68 @@ const deleteEnergiesByYear = async function (req, res) {
     }
 };
 exports.deleteEnergiesByYear = deleteEnergiesByYear;
+/**
+ * @desc delete enrgies by year
+ * @param DELETE /year-month
+ * @access PUBLIC
+ **/
+const deleteEnergiesByYearAndMonth = async function (req, res) {
+    try {
+        const { year, month } = req.query;
+        // Validating input data from client
+        const { error } = (0, energies_shema_1.EnergiesByYearAndMonthSchema)(req.query);
+        if (error)
+            return res
+                .status(400)
+                .json(new error_handler_1.default(400, `${error.details[0].message}`));
+        const existEnrgie = await energie_model_1.default.find({ $and: [{ year }, { month }] });
+        if (!existEnrgie.length) {
+            return res
+                .status(404)
+                .json(new error_handler_1.default(404, "Energy record does not exist."));
+        }
+        await energie_model_1.default.deleteMany({ $and: [{ year }, { month }] });
+        return res
+            .status(200)
+            .json(new success_response_1.SuccessResponse(200, "energies deleted successfully"));
+    }
+    catch (error) {
+        // Handle errors
+        res.status(500).json(new error_handler_1.default(500, "Internal server error"));
+        throw new error_handler_1.default(500, `deleteEnergiesByYearAndMonth error : ${error}`);
+    }
+};
+exports.deleteEnergiesByYearAndMonth = deleteEnergiesByYearAndMonth;
+/**
+ * @desc delete enrgies by year
+ * @param DELETE /date
+ * @access PUBLIC
+ **/
+const deleteEnergiesByDate = async function (req, res) {
+    try {
+        const { date } = req.query;
+        const existDate = await energie_model_1.default.findOne({ date });
+        if (!existDate) {
+            return res
+                .status(404)
+                .json(new error_handler_1.default(404, "Energy record does not exist"));
+        }
+        // Validating input data from client
+        const { error } = (0, energies_shema_1.EnergiesByDateSchema)(req.query);
+        if (error)
+            return res
+                .status(400)
+                .json(new error_handler_1.default(400, `${error.details[0].message}`));
+        await energie_model_1.default.deleteMany({ date });
+        return res
+            .status(200)
+            .json(new success_response_1.SuccessResponse(200, "energies deleted successfully"));
+    }
+    catch (error) {
+        // Handle errors
+        res.status(500).json(new error_handler_1.default(500, "Internal server error"));
+        throw new error_handler_1.default(500, `deleteEnergiesByDate error : ${error}`);
+    }
+};
+exports.deleteEnergiesByDate = deleteEnergiesByDate;
 //# sourceMappingURL=energie.controllers.js.map

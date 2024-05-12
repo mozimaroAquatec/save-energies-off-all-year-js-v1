@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateEnergie = exports.createAllDatesAndHoursOfYear = void 0;
+exports.generateDatesAndHoursOfMonth = exports.updateEnergie = exports.createAllDatesAndHoursOfYear = void 0;
 const energie_model_1 = __importDefault(require("../models/energie.model"));
 const datetime_1 = __importDefault(require("../utils/datetime"));
 const error_handler_1 = __importDefault(require("../utils/error.handler"));
@@ -14,27 +14,30 @@ const error_handler_1 = __importDefault(require("../utils/error.handler"));
  */
 const createAllDatesAndHoursOfYear = async (year) => {
     try {
-        const startDate = new Date(year, 0, 1); // January 1st of the given year
-        const endDate = new Date(year, 11, 31); // December 31st of the given year
-        for (let currentDate = startDate; currentDate <= endDate; currentDate.setDate(currentDate.getDate() + 1)) {
-            const day = currentDate.getDate();
-            const month = currentDate.getMonth() + 1; // Months are zero-based, so add 1
-            const date = `${year}/${month}/${day}`;
-            console.log(`date: ${year}/${month}/${day}`);
-            // Log the hours from 0 to 23
-            for (let hour = 0; hour < 24; hour++) {
-                // console.log(` hour < 10: ${hour < 10}`);
-                // Extract hour and format it with leading zero if necessary
-                const formattedHour = hour < 10 ? "0" + hour : hour;
-                console.log(` hour : ${formattedHour}`);
-                await energie_model_1.default.create({
-                    year,
-                    date,
-                    time: formattedHour,
-                });
+        for (let month = 0; month < 12; month++) {
+            const startDate = new Date(year, month, 1); // First day of the current month
+            const endDate = new Date(year, month + 1, 0); // Last day of the current month
+            for (let currentDate = startDate; currentDate <= endDate; currentDate.setDate(currentDate.getDate() + 1)) {
+                const day = currentDate.getDate();
+                const currentMonth = currentDate.getMonth() + 1; // Months are zero-based, so add 1
+                const date = `${year}/${currentMonth}/${day}`;
+                console.log(`date: ${year}/${currentMonth}/${day}`);
+                // Log the hours from 0 to 23
+                for (let hour = 0; hour < 24; hour++) {
+                    // console.log(` hour < 10: ${hour < 10}`);
+                    // Extract hour and format it with leading zero if necessary
+                    const formattedHour = hour < 10 ? "0" + hour : hour;
+                    console.log(` hour : ${formattedHour}`);
+                    await energie_model_1.default.create({
+                        year,
+                        month: currentMonth,
+                        date,
+                        time: formattedHour,
+                    });
+                }
+                // Add a separator for the next day
+                console.log("\nnext day\n");
             }
-            // Add a separator for the next day
-            console.log("\nnext day\n");
         }
     }
     catch (error) {
@@ -81,4 +84,36 @@ const updateEnergie = async function (message) {
     }
 };
 exports.updateEnergie = updateEnergie;
+/**
+ * @desc Creates energy records for all dates and hours of a given year and month.
+ * @param year - The year for which to generate energy records.
+ * @param month - The month for which to generate energy records (1-based index).
+ * @access PUBLIC
+ */
+const generateDatesAndHoursOfMonth = async (year, month) => {
+    try {
+        // Determine the last day of the current month
+        const lastDayOfMonth = new Date(year, month, 0).getDate();
+        for (let day = 1; day <= lastDayOfMonth; day++) {
+            const date = `${year}/${month}/${day}`;
+            // Log the hours from 0 to 23
+            for (let hour = 0; hour < 24; hour++) {
+                const formattedHour = hour < 10 ? "0" + hour : hour;
+                console.log(`date: ${date}`);
+                console.log(` hour : ${formattedHour}`);
+                await energie_model_1.default.create({
+                    year,
+                    month,
+                    date,
+                    time: formattedHour,
+                });
+            }
+            console.log("\nnext day\n");
+        }
+    }
+    catch (error) {
+        throw new error_handler_1.default(500, `generateDatesAndHoursOfMonth: ${error}`);
+    }
+};
+exports.generateDatesAndHoursOfMonth = generateDatesAndHoursOfMonth;
 //# sourceMappingURL=energies.services.js.map
