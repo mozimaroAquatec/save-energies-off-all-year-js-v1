@@ -98,6 +98,9 @@ const getEnergiesWithPagination = async function (req, res) {
         const pagesCount = Math.ceil((await energie_model_1.default.find().select("-updatedAt -createdAt -message -year"))
             .length / pageSize);
         console.log("pagesCount", pagesCount);
+        if (!pagesCount) {
+            return res.status(200).json([]);
+        }
         if (pagesCount < currentPage)
             return res
                 .status(400)
