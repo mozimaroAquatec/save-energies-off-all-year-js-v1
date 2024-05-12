@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateEnergie = exports.createAllDatesAndHoursOfYear = void 0;
 const energie_model_1 = __importDefault(require("../models/energie.model"));
+const datetime_1 = __importDefault(require("../utils/datetime"));
 const error_handler_1 = __importDefault(require("../utils/error.handler"));
 /**
  * @desc Creates energy records for all dates and hours of a given year.
@@ -22,13 +23,14 @@ const createAllDatesAndHoursOfYear = async (year) => {
             console.log(`date: ${year}/${month}/${day}`);
             // Log the hours from 0 to 23
             for (let hour = 0; hour < 24; hour++) {
-                console.log(`hour: ${hour}`);
+                // console.log(` hour < 10: ${hour < 10}`);
+                // Extract hour and format it with leading zero if necessary
+                const formattedHour = hour < 10 ? "0" + hour : hour;
+                console.log(` hour : ${formattedHour}`);
                 await energie_model_1.default.create({
                     year,
                     date,
-                    energie: "00.00:000",
-                    time: hour,
-                    message: "00.00:000.00:00:00",
+                    time: formattedHour,
                 });
             }
             // Add a separator for the next day
@@ -48,12 +50,10 @@ exports.createAllDatesAndHoursOfYear = createAllDatesAndHoursOfYear;
 const updateEnergie = async function (message) {
     try {
         // Get the current date and time
-        const utcNow = new Date();
-        const gmtPlus1Time = new Date(utcNow.getTime() + 3600000); // Add 1 hour (3600000 milliseconds)
-        const hour = gmtPlus1Time.getUTCHours();
+        const currentDate = (0, datetime_1.default)();
         // Format the date as "YYYY/M/D"
-        const date = `${gmtPlus1Time.getFullYear()}/${gmtPlus1Time.getMonth() + 1}/${gmtPlus1Time.getDate()}`;
-        const time = `${hour}`;
+        const date = `${currentDate.currentYear}/${currentDate.currentMonth}/${currentDate.currentDay}`;
+        const time = `${currentDate.formattedHour}`;
         // Extract energy data from the message
         let energie = message.toString().slice(0, 9);
         if (energie[energie.length - 1] === ".") {

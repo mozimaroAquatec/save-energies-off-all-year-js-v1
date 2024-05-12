@@ -31,7 +31,7 @@ exports.deleteEnergiesByYear = exports.resetEnergieById = exports.updateEnergie 
 const error_handler_1 = __importDefault(require("../utils/error.handler")); // Importing custom error handler
 const energie_model_1 = __importDefault(require("../models/energie.model")); // Importing Helioss model
 const energieServices = __importStar(require("../services/energies.services"));
-const is_valid_year_1 = require("../utils/is.valid.year");
+const year_validation_1 = require("../utils/year-validation");
 const energies_shema_1 = require("../utils/schemas/energies.shema");
 const success_response_1 = require("../utils/success.response");
 /**
@@ -51,7 +51,7 @@ const createEenrgies = async function (req, res) {
         if (typeof year === "string") {
             year = parseInt(year);
         }
-        const checkYear = (0, is_valid_year_1.isValidYear)(year);
+        const checkYear = (0, year_validation_1.isValidYear)(year);
         if (!checkYear)
             return res.status(400).json({ status: "false", message: "invalid year" });
         // Generate energy records for the specified year
@@ -131,7 +131,7 @@ const getEnergiesByYear = async function (req, res) {
             return res
                 .status(400)
                 .json(new error_handler_1.default(400, `${error.details[0].message}`));
-        const checkYear = (0, is_valid_year_1.isValidYear)(parseInt(year));
+        const checkYear = (0, year_validation_1.isValidYear)(parseInt(year));
         if (!checkYear)
             return res.status(400).json(new error_handler_1.default(400, "invalid year"));
         // Query the database for all Energies records

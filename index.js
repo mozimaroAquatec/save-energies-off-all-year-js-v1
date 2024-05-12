@@ -33,10 +33,13 @@ const connect_db_1 = __importDefault(require("./config/connect.db")); // Importi
 const energie_routes_1 = __importDefault(require("./routes/energie.routes")); // Importing energy routes
 const energieServices = __importStar(require("./services/energies.services")); // Importing energy services
 const mqtt_services_1 = __importDefault(require("./services/mqtt.services"));
+const cors_1 = __importDefault(require("cors"));
+require("dotenv").config();
 // Creating an Express app
 const app = (0, express_1.default)();
 app.use(express_1.default.urlencoded({ extended: false }));
 app.use(express_1.default.json());
+app.use((0, cors_1.default)());
 // Connecting to MongoDB
 (0, connect_db_1.default)();
 // Initialize MQTT client
@@ -53,7 +56,13 @@ mqttClient.subscribe("Helioss/Energie", () => {
 mqttClient.on("message", async function (topic, message) {
     console.log(`Received message from topic : ${topic} and the message is :${message}`);
     // Updating energy data
-    await energieServices.updateEnergie(message.toString());
+    // todo try and catch
+    try {
+        await energieServices.updateEnergie(message.toString());
+    }
+    catch (error) {
+        throw new error_handler_1.default(500, `updateEnergie error : ${error}`);
+    }
 });
 // Using the energy routes
 app.use("/", energie_routes_1.default);
